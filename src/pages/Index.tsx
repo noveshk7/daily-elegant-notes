@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
-import { Calendar, Search, Plus, FileText, Trash2, Edit3, Menu } from "lucide-react";
+import { Calendar, Search, Plus, FileText, Trash2, Edit3, Menu, Trophy } from "lucide-react";
 import { format, startOfDay, isToday, isYesterday, parseISO } from "date-fns";
 import NoteEditor from "../components/NoteEditor";
 import Sidebar from "../components/Sidebar";
 import NotesList from "../components/NotesList";
 import SearchBar from "../components/SearchBar";
 import MobileDatePicker from "../components/MobileDatePicker";
+import DateSelectionDialog from "../components/DateSelectionDialog";
+import MilestoneBadges from "../components/MilestoneBadges";
 import { Note, useNotes } from "../hooks/useNotes";
+import { useMilestones } from "../hooks/useMilestones";
 
 const Index = () => {
   const {
@@ -23,21 +26,36 @@ const Index = () => {
     filteredNotes
   } = useNotes();
 
+  const { milestones, stats, achievedCount, recentAchievements } = useMilestones(notes);
+
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showNotesList, setShowNotesList] = useState(true);
   const [showMobileDatePicker, setShowMobileDatePicker] = useState(false);
+  const [showDateSelection, setShowDateSelection] = useState(false);
+  const [showMilestones, setShowMilestones] = useState(false);
   const [tempNote, setTempNote] = useState<Note | null>(null);
+  const [pendingNoteData, setPendingNoteData] = useState<{title: string, content: string} | null>(null);
 
   const handleCreateNote = () => {
-    const newNote = addNote(selectedDate);
+    setShowDateSelection(true);
+  };
+
+  const handleDateConfirm = (selectedNoteDate: Date) => {
+    const newNote = addNote(selectedNoteDate);
     setTempNote(newNote);
     setSelectedNote(newNote.id);
     setIsCreatingNote(true);
+    setShowDateSelection(false);
     // On mobile, hide notes list when creating/editing a note
     if (window.innerWidth < 1024) {
       setShowNotesList(false);
     }
+  };
+
+  const handleDateSelectionCancel = () => {
+    setShowDateSelection(false);
+    setPendingNoteData(null);
   };
 
   const handleNoteSelect = (noteId: string) => {
@@ -119,6 +137,17 @@ const Index = () => {
               <h1 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
                 Notes
               </h1>
+              <button
+                onClick={() => setShowMilestones(!showMilestones)}
+                className="ml-auto p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors relative"
+              >
+                <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                {achievedCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {achievedCount}
+                  </span>
+                )}
+              </button>
             </div>
 
             <div className="p-3 lg:p-4 space-y-3 lg:space-y-4">
@@ -133,6 +162,16 @@ const Index = () => {
                 <Plus className="w-4 h-4 lg:w-5 lg:h-5" />
                 <span className="font-medium">New Note</span>
               </button>
+
+              {/* Milestones Section (Desktop) */}
+              <div className="hidden lg:block">
+                <MilestoneBadges
+                  milestones={milestones}
+                  stats={stats}
+                  achievedCount={achievedCount}
+                  recentAchievements={recentAchievements}
+                />
+              </div>
 
               {/* Date Header */}
               <div className="flex items-center justify-between">
@@ -152,6 +191,18 @@ const Index = () => {
                 </button>
               </div>
             </div>
+
+            {/* Mobile Milestones Section */}
+            {showMilestones && (
+              <div className="lg:hidden p-3 border-t border-white/20">
+                <MilestoneBadges
+                  milestones={milestones}
+                  stats={stats}
+                  achievedCount={achievedCount}
+                  recentAchievements={recentAchievements}
+                />
+              </div>
+            )}
 
             {/* Notes List */}
             <NotesList
@@ -218,6 +269,13 @@ const Index = () => {
             )}
           </div>
         </div>
+
+        {/* Date Selection Dialog */}
+        <DateSelectionDialog
+          isOpen={showDateSelection}
+          onDateConfirm={handleDateConfirm}
+          onCancel={handleDateSelectionCancel}
+        />
 
         {/* Mobile Date Picker */}
         <MobileDatePicker
