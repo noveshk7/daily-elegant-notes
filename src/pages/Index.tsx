@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Calendar, Search, Plus, FileText, Trash2, Edit3, Menu } from "lucide-react";
 import { format, startOfDay, isToday, isYesterday, parseISO } from "date-fns";
@@ -6,6 +5,7 @@ import NoteEditor from "../components/NoteEditor";
 import Sidebar from "../components/Sidebar";
 import NotesList from "../components/NotesList";
 import SearchBar from "../components/SearchBar";
+import MobileDatePicker from "../components/MobileDatePicker";
 import { Note, useNotes } from "../hooks/useNotes";
 
 const Index = () => {
@@ -26,9 +26,12 @@ const Index = () => {
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showNotesList, setShowNotesList] = useState(true);
+  const [showMobileDatePicker, setShowMobileDatePicker] = useState(false);
+  const [tempNote, setTempNote] = useState<Note | null>(null);
 
   const handleCreateNote = () => {
     const newNote = addNote(selectedDate);
+    setTempNote(newNote);
     setSelectedNote(newNote.id);
     setIsCreatingNote(true);
     // On mobile, hide notes list when creating/editing a note
@@ -40,6 +43,7 @@ const Index = () => {
   const handleNoteSelect = (noteId: string) => {
     setSelectedNote(noteId);
     setIsCreatingNote(false);
+    setTempNote(null);
     // On mobile, hide notes list when selecting a note
     if (window.innerWidth < 1024) {
       setShowNotesList(false);
@@ -49,6 +53,18 @@ const Index = () => {
   const handleNoteUpdate = (noteId: string, content: string, title: string) => {
     updateNote(noteId, content, title);
     setIsCreatingNote(false);
+    setTempNote(null);
+  };
+
+  const handleNoteCancel = () => {
+    // If we were creating a new note, delete the temporary note
+    if (isCreatingNote && tempNote) {
+      deleteNote(tempNote.id);
+      setTempNote(null);
+    }
+    setSelectedNote(null);
+    setIsCreatingNote(false);
+    setShowNotesList(true);
   };
 
   const handleBackToNotes = () => {
@@ -119,13 +135,21 @@ const Index = () => {
               </button>
 
               {/* Date Header */}
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                <Calendar className="w-3 h-3 lg:w-4 lg:h-4" />
-                <span className="text-xs lg:text-sm font-medium">
-                  {isToday(selectedDate) ? "Today" : 
-                   isYesterday(selectedDate) ? "Yesterday" : 
-                   format(selectedDate, "MMMM d, yyyy")}
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                  <Calendar className="w-3 h-3 lg:w-4 lg:h-4" />
+                  <span className="text-xs lg:text-sm font-medium">
+                    {isToday(selectedDate) ? "Today" : 
+                     isYesterday(selectedDate) ? "Yesterday" : 
+                     format(selectedDate, "MMMM d, yyyy")}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowMobileDatePicker(true)}
+                  className="lg:hidden p-1 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+                >
+                  <Calendar className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                </button>
               </div>
             </div>
 
@@ -166,13 +190,7 @@ const Index = () => {
                   note={currentNote}
                   isCreating={isCreatingNote}
                   onSave={handleNoteUpdate}
-                  onCancel={() => {
-                    setIsCreatingNote(false);
-                    setSelectedNote(null);
-                    if (window.innerWidth < 1024) {
-                      setShowNotesList(true);
-                    }
-                  }}
+                  onCancel={handleNoteCancel}
                 />
               </>
             ) : (
@@ -200,6 +218,14 @@ const Index = () => {
             )}
           </div>
         </div>
+
+        {/* Mobile Date Picker */}
+        <MobileDatePicker
+          selectedDate={selectedDate}
+          onDateSelect={setSelectedDate}
+          isOpen={showMobileDatePicker}
+          onOpenChange={setShowMobileDatePicker}
+        />
       </div>
     </div>
   );

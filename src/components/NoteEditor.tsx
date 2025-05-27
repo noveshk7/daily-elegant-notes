@@ -53,27 +53,24 @@ const NoteEditor = ({ note, isCreating, onSave, onCancel }: NoteEditorProps) => 
     }
   };
 
+  const handleCancel = () => {
+    // If creating a new note and there are unsaved changes, just cancel without saving
+    if (hasChanges && (isCreating || note)) {
+      const confirmCancel = window.confirm("You have unsaved changes. Are you sure you want to cancel?");
+      if (!confirmCancel) return;
+    }
+    onCancel();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey && e.key === 's') {
       e.preventDefault();
       handleSave();
     }
     if (e.key === 'Escape') {
-      onCancel();
+      handleCancel();
     }
   };
-
-  // Auto-save functionality
-  useEffect(() => {
-    if (hasChanges && note?.id) {
-      const timer = setTimeout(() => {
-        onSave(note.id, content, title);
-        setHasChanges(false);
-      }, 2000); // Auto-save after 2 seconds of inactivity
-
-      return () => clearTimeout(timer);
-    }
-  }, [title, content, hasChanges, note?.id, onSave]);
 
   return (
     <div className="flex-1 flex flex-col" onKeyDown={handleKeyDown}>
@@ -89,27 +86,30 @@ const NoteEditor = ({ note, isCreating, onSave, onCancel }: NoteEditorProps) => 
                 {isCreating ? "New Note" : "Edit Note"}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {hasChanges ? "Unsaved changes" : "Auto-saved"}
+                {hasChanges ? "Unsaved changes" : "No changes"}
               </p>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            {hasChanges && (
-              <button
-                onClick={handleSave}
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
-              >
-                <Save className="w-4 h-4" />
-                Save
-              </button>
-            )}
             <button
-              onClick={onCancel}
+              onClick={handleSave}
+              disabled={!hasChanges}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors duration-200 text-sm font-medium ${
+                hasChanges 
+                  ? 'bg-green-500 hover:bg-green-600 text-white' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <Save className="w-4 h-4" />
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
               className="flex items-center gap-2 px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
             >
               <X className="w-4 h-4" />
-              Close
+              Cancel
             </button>
           </div>
         </div>
@@ -153,8 +153,8 @@ const NoteEditor = ({ note, isCreating, onSave, onCancel }: NoteEditorProps) => 
         <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-white/20 dark:border-slate-600/20">
           <span>💡 Tips:</span>
           <span>Ctrl+S to save</span>
-          <span>Esc to close</span>
-          <span>Auto-saves every 2 seconds</span>
+          <span>Esc to cancel</span>
+          <span>Click Save to keep changes</span>
         </div>
       </div>
     </div>
