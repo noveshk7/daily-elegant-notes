@@ -50,6 +50,8 @@ const NoteEditor = ({ note, isCreating, onSave, onCancel }: NoteEditorProps) => 
     if (note?.id) {
       onSave(note.id, content, title);
       setHasChanges(false);
+      // Close the note tab after saving
+      onCancel();
     }
   };
 
@@ -102,7 +104,7 @@ const NoteEditor = ({ note, isCreating, onSave, onCancel }: NoteEditorProps) => 
               }`}
             >
               <Save className="w-4 h-4" />
-              Save
+              Save & Close
             </button>
             <button
               onClick={handleCancel}
@@ -152,9 +154,9 @@ const NoteEditor = ({ note, isCreating, onSave, onCancel }: NoteEditorProps) => 
         {/* Keyboard Shortcuts */}
         <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-white/20 dark:border-slate-600/20">
           <span>💡 Tips:</span>
-          <span>Ctrl+S to save</span>
+          <span>Ctrl+S to save & close</span>
           <span>Esc to cancel</span>
-          <span>Click Save to keep changes</span>
+          <span>Click Save & Close to keep changes</span>
         </div>
       </div>
     </div>

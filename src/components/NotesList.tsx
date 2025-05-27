@@ -27,6 +27,14 @@ const NotesList = ({ notes, selectedNoteId, onNoteSelect, onNoteDelete }: NotesL
     return content.substring(0, maxLength) + "...";
   };
 
+  const handleDeleteClick = (e: React.MouseEvent, noteId: string) => {
+    e.stopPropagation();
+    const confirmDelete = window.confirm("Are you sure you want to delete this note?");
+    if (confirmDelete) {
+      onNoteDelete(noteId);
+    }
+  };
+
   if (notes.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
@@ -62,11 +70,9 @@ const NotesList = ({ notes, selectedNoteId, onNoteSelect, onNoteDelete }: NotesL
                 {note.title}
               </h3>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onNoteDelete(note.id);
-                }}
-                className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-red-500/20 text-red-500 hover:text-red-600 transition-all duration-200 flex-shrink-0"
+                onClick={(e) => handleDeleteClick(e, note.id)}
+                className="p-1.5 rounded-md hover:bg-red-500/20 text-red-500 hover:text-red-600 transition-all duration-200 flex-shrink-0 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                title="Delete note"
               >
                 <Trash2 className="w-3 h-3 lg:w-4 lg:h-4" />
               </button>
